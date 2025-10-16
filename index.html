@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Premium 3D + Musik</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body, html { width:100%; height:100%; background:#000; color:#fff; font-family:sans-serif; overflow:hidden; }
+    #menu { position:absolute; top:20px; right:20px; display:flex; gap:10px; z-index:50; }
+    #menu button { padding:10px 20px; background: rgba(255,255,255,0.1); border:1px solid #66f; color:#66f; border-radius:5px; cursor:pointer; transition: all .3s; }
+    #menu button:hover { background: rgba(255,255,255,0.2); color:#88f; }
+    #content { position:absolute; top:80px; left:50%; transform: translateX(-50%); width:90%; max-width:1200px; z-index:10; }
+    .hidden { display: none; }
+    #loginOverlay { position:absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; z-index:100; }
+    #loginBox { background: rgba(20,20,30,0.95); padding:30px; border-radius:10px; width:300px; }
+    #loginBox input { width:100%; padding:10px; margin-bottom:10px; border:1px solid #66f; background: rgba(255,255,255,0.1); color: #fff; }
+    #loginBox button { width:100%; padding:10px; background:#66f; border:none; color:#fff; border-radius:5px; cursor:pointer; }
+    canvas { position:absolute; top:0; left:0; z-index:1; }
+    button.mainBtn { margin-top:20px; padding:15px 30px; background: #220044; border:none; border-radius:10px; color:#88f; cursor:pointer; }
+    button.mainBtn:hover { background: #330055; }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <button data-page="home">Home</button>
+    <button data-page="music">Musik</button>
+    <button data-page="gallery">3D Gallery</button>
+    <button data-page="premium">Premium</button>
+    <button id="btnLogin">Login</button>
+  </div>
+
+  <div id="content"></div>
+
+  <div id="loginOverlay" class="hidden">
+    <div id="loginBox">
+      <h2>Login / Daftar</h2>
+      <input id="inpUser" type="text" placeholder="Username" />
+      <input id="inpPass" type="password" placeholder="Password" />
+      <button id="btnDoLogin">Login</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+
+  <script>
+    let userLoggedIn = false;
+    let isPremium = false;
+    let currentPage = 'home';
+
+    let scene, camera, renderer, analyser, cube, listener, sound;
+
+    function initThree() {
+      if (renderer) return;
+      const canvas = document.createElement('canvas');
+      document.body.appendChild(canvas);
+      renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(window.devicePixelRatio);
+
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+      camera.position.z = 5;
+
+      listener = new THREE.AudioListener();
+      camera.add(listener);
+      sound = new THREE.Audio(listener);
+      analyser = new THREE.AudioAnalyser(sound, 32);
+
+      const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+      scene.add(ambient);
+      const point = new THREE.PointLight(0x66aaff, 1);
+      point.position.set(5,5,5);
+      scene.add(point);
+
+      const geometry = new THREE.BoxGeometry();
+      const material = new THREE.MeshStandardMaterial({ color: 0x8866ff, roughness:0.5, metalness:0.7 });
+      cube = new THREE.Mesh(geometry, material);
+      scene.add(cube);
+
+      window.addEventListener('resize', ()=> {
+        camera.aspect = window.innerWidth/window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+    }
+
+    function loadAudioForThree() {
+      const loader = new THREE.AudioLoader();
+      loader.load('audio/sample.mp3', buffer => {
+        sound.setBuffer(buffer);
+        sound.setLoop(true);
+        sound.setVolume(0.5);
+        if (isPremium) sound.play();
+      });
+    }
+
+    function animateThree() {
+      requestAnimationFrame(animateThree);
+      cube.rotation.x += 0.005;
+      cube.rotation.y += 0.01;
+      if (analyser) {
+        const data = analyser.getAverageFrequency();
+        cube.scale.set(1 + data/100, 1 + data/100, 1 + data/100);
+      }
+      renderer.render(scene, camera);
+    }
+
+    const howlerSound = new Howl({ src: ['audio/sample.mp3'], html5: true, volume:0.7 });
+
+    document.getElementById('btnLogin').onclick = ()=> document.getElementById('loginOverlay').classList.remove('hidden');
+    document.getElementById('btnDoLogin').onclick = () => {
+      const u = document.getElementById('inpUser').value.trim();
+      const p = document.getElementById('inpPass').value.trim();
+      if (u && p) {
+        userLoggedIn = true;
+        document.getElementById('loginOverlay').classList.add('hidden');
+        renderPage(currentPage);
+      } else {
+        alert("Isi username & password");
+      }
+    };
+
+    function renderPage(page) {
+      currentPage = page;
+      const c = document.getElementById('content');
+      c.innerHTML = "";
+      if (page === 'home') {
+        const h = document.createElement('h1'); h.textContent="Selamat Datang";
+        const btn = document.createElement('button'); btn.className='mainBtn'; btn.textContent="Mulai →"; btn.onclick=()=> renderPage('music');
+        c.append(h, btn);
+      } else if (page === 'music') {
+        if (!userLoggedIn) { c.textContent = "Silakan login dulu"; }
+        else { let b1 = document.createElement('button'); b1.textContent="Play Musik"; b1.onclick=()=> howlerSound.play();
+               let b2 = document.createElement('button'); b2.textContent="Pause Musik"; b2.onclick=()=> howlerSound.pause();
+               c.append(b1,b2); }
+      } else if (page === 'gallery') {
+        if (!userLoggedIn || !isPremium) { c.textContent = "Gallery 3D hanya untuk Premium"; }
+        else { initThree(); loadAudioForThree(); animateThree(); c.append(document.createElement('p')).textContent="3D Gallery Aktif"; }
+      } else if (page === 'premium') {
+        const p = document.createElement('p'); p.textContent="Upgrade ke Premium Rp 25.000";
+        const btn = document.createElement('button'); btn.className='mainBtn'; btn.textContent="Bayar Sekarang";
+        btn.onclick = async () => {
+          try {
+            const resp = await fetch('http://localhost:3000/api/create-transaction', {
+              method:'POST', headers:{'Content-Type':'application/json'},
+              body: JSON.stringify({ order_id: 'order_'+Date.now(), gross_amount: 25000 })
+            });
+            const j = await resp.json();
+            if (j.token) loadSnap(j.token);
+            else alert("Gagal membuat transaksi");
+          } catch (e) { console.error(e); alert("Error pembayaran"); }
+        };
+        c.append(p, btn);
+      }
+    }
+
+    function loadSnap(token) {
+      const s = document.createElement('script');
+      s.src = "https://app.sandbox.midtrans.com/snap/snap.js";
+      s.setAttribute('data-client-key', "<MASUKKAN_CLIENT_KEY_MU_DISINI>");
+      document.head.appendChild(s);
+      s.onload = () => {
+        window.snap.pay(token, {
+          onSuccess: r=> { alert("Pembayaran sukses"); isPremium=true; renderPage('gallery'); },
+          onError: r=> { alert("Error pembayaran"); console.log(r); },
+          onClose: () => { console.log("Popup ditutup"); }
+        });
+      };
+    }
+
+    document.querySelectorAll('#menu button[data-page]').forEach(b => b.onclick = ()=> renderPage(b.getAttribute('data-page')));
+
+    renderPage('home');
+  </script>
+</body>
+</html>
+
+
+
+

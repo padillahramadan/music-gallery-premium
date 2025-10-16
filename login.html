@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login – 3D & Musik Premium</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="overlay">
+    <main class="main-content">
+      <h1>Login</h1>
+      <form id="login-form">
+        <input type="text" id="username" placeholder="Username" required />
+        <input type="password" id="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+      </form>
+      <div id="login-msg"></div>
+    </main>
+  </div>
+
+  <script>
+    document.getElementById('login-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      // dummy: jika username & password “admin”, berhasil login
+      const u = document.getElementById('username').value;
+      const p = document.getElementById('password').value;
+      if(u === 'admin' && p === 'admin') {
+        localStorage.setItem('premium', 'true');
+        window.location.href = 'music.html';
+      } else {
+        document.getElementById('login-msg').innerText = 'Login gagal.';
+      }
+    });
+  </script>
+</body>
+</html>

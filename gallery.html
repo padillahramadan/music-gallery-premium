@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gallery 3D – 3D & Musik Premium</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div id="bg-container"></div>
+  <div class="overlay">
+    <header class="header">
+      <div class="logo">🌐 LOGO 3D</div>
+      <nav class="nav">
+        <a href="index.html">Home</a>
+        <a href="music.html">Musik</a>
+        <a href="gallery.html">Gallery 3D</a>
+        <a href="premium.html">Premium</a>
+        <a href="login.html">Login</a>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <h1 class="intro">Gallery 3D</h1>
+      <div id="three-gallery" style="width:100%; height: 500px;"></div>
+    </main>
+
+    <footer class="footer"></footer>
+  </div>
+
+  <script src="libs/three.min.js"></script>
+  <script src="js/three-scene.js"></script>
+  <script>
+    // Setup basic 3D scene khusus gallery
+    window.addEventListener('DOMContentLoaded', () => {
+      initThree();
+      animateThree();
+    });
+  </script>
+</body>
+</html>
